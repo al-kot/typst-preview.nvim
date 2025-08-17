@@ -30,7 +30,6 @@ function M.render()
 end
 
 function M.clear_preview()
-    print('clear called')
     renderer.clear()
 end
 
@@ -167,39 +166,18 @@ function M.first_page() M.change_page(-state.pages.current + 1) end
 function M.last_page() M.change_page(state.pages.total - state.pages.current) end
 
 function M.open_preview()
-    if not state.preview.win then
-        setup_preview_win()
-        update_total_page_number()
-        if uv.fs_stat(preview_png) then
-            M.render()
-        else
-            M.compile_and_render()
-        end
+    setup_preview_win()
+    update_total_page_number()
+    if uv.fs_stat(preview_png) then
+        M.render()
+    else
+        M.compile_and_render()
     end
 end
 
 function M.close_preview()
     M.clear_preview()
     vim.api.nvim_win_close(state.preview.win, true)
-    state.preview = nil
 end
-
-
--- utils.add_keybinds({
---     { 'n', '<leader>tn',  function() change_page(1) end },
---     { 'n', '<leader>te',  function() change_page(-1) end },
---     { 'n', '<leader>tgg', function() change_page(-cur_page + 1) end },
---     { 'n', '<leader>tG',  function() change_page(page_number - cur_page) end },
---     { 'n', '<leader>tr',  compile_and_render },
---     { 'n', '<leader>tc',  clear_preview },
---     { 'n', '<leader>td', function()
---         vim.api.nvim_clear_autocmds({ group = 'TypstPreview' })
---         close_preview()
---     end },
---     { 'n', '<leader>to', function()
---         open_preview()
---         setup_autocmds()
---     end },
--- })
 
 return M
