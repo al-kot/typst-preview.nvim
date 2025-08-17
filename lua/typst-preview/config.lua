@@ -1,11 +1,21 @@
 ---@class ConfigOpts
+
+---@class PreviewOpts
 ---@field max_preview_width number
 ---@field ppi number
 ---@field preview_position 'left' | 'right'
+
+---@class style
+---@field page_count_color string
 local default_opts = {
-    max_preview_width = 80,
-    ppi = 144,
-    preview_position = 'right',
+    preview = {
+        ppi = 144,
+        max_width = 80,
+        position = 'right',
+    },
+    style = {
+        page_count_color = '',
+    },
 }
 
 local M = {

@@ -1,4 +1,5 @@
 local utils = require('typst-preview/utils')
+local config = require('typst-preview/config').opts
 
 local M = {}
 
@@ -7,7 +8,13 @@ function M.setup(opts)
     require('typst-preview/config').setup(opts)
 end
 
-vim.api.nvim_set_hl(0, "StatusLineTypstPreview", { bold = true, fg = '#83a598', bg = 'none' })
+function M.start()
+end
+
+function M.stop()
+end
+
+vim.api.nvim_set_hl(0, "StatusLineTypstPreview", { bold = true, fg = config.style.page_count_color, bg = 'none' })
 vim.api.nvim_create_augroup('TypstPreview', {})
 utils.create_autocmds({
     {

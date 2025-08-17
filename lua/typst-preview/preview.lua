@@ -1,5 +1,6 @@
 local renderer = require('typst-preview/renderer/renderer')
 local utils = require('typst-preview/utils')
+local config = require('typst-preview/config').opts
 
 local M = {}
 
@@ -24,8 +25,6 @@ if not uv.fs_stat(preview_dir) then
 end
 local preview_png = preview_dir .. vim.fn.expand('%:t:r') .. '.png'
 
-local config = require('typst-preview/config').opts
-
 function M.render()
     renderer.render(preview_png, state.preview.win_offset, state.preview.height, state.preview.width)
 end
@@ -34,7 +33,6 @@ function M.clear_preview()
     print('clear called')
     renderer.clear()
 end
-
 
 ---@type uv.uv_process_t?
 local current_job
@@ -109,8 +107,8 @@ function M.update_preview_size()
 
     local rows = window_height
     local cols = math.ceil((cell_height * rows * img_width) / (img_height * cell_width))
-    if cols > config.max_preview_width then
-        cols = config.max_preview_width
+    if cols > config.preview.max_width then
+        cols = config.preview.max_width
         rows = math.ceil((cell_width * cols * img_height) / (img_width * cell_height))
     end
     state.preview.height = rows
@@ -124,7 +122,7 @@ local function setup_preview_win()
     state.code.buf = vim.api.nvim_get_current_buf()
 
     state.preview.win = vim.api.nvim_open_win(0, false, {
-        split = config.preview_position,
+        split = config.preview.position,
         win = 0,
         focusable = false,
         vertical = true,
@@ -136,7 +134,7 @@ local function setup_preview_win()
     vim.api.nvim_win_set_buf(state.preview.win, state.preview.buf)
     state.preview.win_offset = vim.fn.win_screenpos(state.preview.win)[2]
 
-    if config.preview_position == 'left' then
+    if config.preview.position == 'left' then
         vim.schedule(function() vim.api.nvim_set_current_win(state.code.win) end)
     end
 end

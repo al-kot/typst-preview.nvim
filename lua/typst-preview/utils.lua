@@ -49,7 +49,7 @@ end
 ---@return string
 function M.typst_compile_cmd(opts)
     local echo = 'echo \'' .. opts.data .. '\''
-    local compile = 'typst compile -f ' .. opts.format .. ' --ppi ' .. (opts.ppi or config.ppi)
+    local compile = 'typst compile -f ' .. opts.format .. ' --ppi ' .. (opts.ppi or config.preview.ppi)
     if opts.pages then
         compile = compile .. ' --pages ' .. opts.pages
     end
