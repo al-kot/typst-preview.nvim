@@ -1,6 +1,7 @@
-local renderer = require('typst-preview/renderer/renderer')
-local utils = require('typst-preview/utils')
-local config = require('typst-preview/config').opts
+local renderer = require('typst-preview.renderer.renderer')
+local utils = require('typst-preview.utils')
+local config = require('typst-preview.config').opts.preview
+local statusline = require('typst-preview.statusline')
 
 local M = {}
 
@@ -55,13 +56,6 @@ function M.compile_and_render()
     end)
 end
 
-function M.update_statusline()
-    vim.api.nvim_set_option_value("statusline",
-        '%#StatusLineTypstPreview#%=' .. state.pages.current .. '/' .. state.pages.total .. ' ',
-        { win = state.preview.win })
-    vim.cmd("redrawstatus")
-end
-
 local function update_total_page_number()
     local target_pdf = preview_dir .. 'preview.pdf'
     local cmd = utils.typst_compile_cmd({
@@ -77,37 +71,18 @@ local function update_total_page_number()
         return
     end
     state.pages.total = new_page_number
-end
-
----@return number, number
-local function get_image_dimensions()
-    local cmd = utils.typst_compile_cmd({
-        data = utils.get_buf_content(state.code.buf),
-        format = 'png',
-        pages = 1
-    })
-    local res = vim.system({ vim.o.shell, vim.o.shellcmdflag, cmd }):wait()
-    local data = res.stdout
-
-    if not data then
-        print('failed to compile (img dimentsions)', res.stderr)
-        return 0, 0
-    end
-
-    local w = utils.bytes_to_number(data:sub(17, 20))
-    local h = utils.bytes_to_number(data:sub(21, 24))
-    return h, w
+    statusline.update(state)
 end
 
 function M.update_preview_size()
     local cell_width, cell_height = utils.get_cell_dimensions()
-    local img_height, img_width = get_image_dimensions()
+    local img_height, img_width = utils.get_image_dimensions(utils.get_buf_content(state.code.buf))
     local window_height = vim.api.nvim_win_get_height(state.code.win)
 
     local rows = window_height
     local cols = math.ceil((cell_height * rows * img_width) / (img_height * cell_width))
-    if cols > config.preview.max_width then
-        cols = config.preview.max_width
+    if cols > config.max_width then
+        cols = config.max_width
         rows = math.ceil((cell_width * cols * img_height) / (img_width * cell_height))
     end
     state.preview.height = rows
@@ -121,7 +96,7 @@ local function setup_preview_win()
     state.code.buf = vim.api.nvim_get_current_buf()
 
     state.preview.win = vim.api.nvim_open_win(0, false, {
-        split = config.preview.position,
+        split = config.position,
         win = 0,
         focusable = false,
         vertical = true,
@@ -133,7 +108,7 @@ local function setup_preview_win()
     vim.api.nvim_win_set_buf(state.preview.win, state.preview.buf)
     state.preview.win_offset = vim.fn.win_screenpos(state.preview.win)[2]
 
-    if config.preview.position == 'left' then
+    if config.position == 'left' then
         vim.schedule(function() vim.api.nvim_set_current_win(state.code.win) end)
     end
 end
@@ -154,7 +129,7 @@ function M.change_page(n)
 
     state.pages.current = new_page
     M.compile_and_render()
-    M.update_statusline()
+    statusline.update(state)
 end
 
 function M.next_page() M.change_page(1) end
@@ -168,11 +143,7 @@ function M.last_page() M.change_page(state.pages.total - state.pages.current) en
 function M.open_preview()
     setup_preview_win()
     update_total_page_number()
-    if uv.fs_stat(preview_png) then
-        M.render()
-    else
-        M.compile_and_render()
-    end
+    M.compile_and_render()
 end
 
 function M.close_preview()

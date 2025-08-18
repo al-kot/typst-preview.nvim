@@ -13,8 +13,8 @@ local default_opts = {
         max_width = 80,
         position = 'right',
     },
-    style = {
-        page_count_color = '',
+    statusline = {
+        color = '',
     },
 }
 
@@ -22,6 +22,7 @@ local M = {
     opts = default_opts
 }
 
+---@param opts ConfigOpts?
 function M.setup(opts)
     M.opts = vim.tbl_deep_extend('force', M.opts, opts or {})
 end

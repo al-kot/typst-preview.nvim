@@ -1,4 +1,4 @@
-local config = require('typst-preview/config').opts
+local config = require('typst-preview.config').opts
 local M = {}
 
 ---Get the dimensions of a terminal cell in pixels
@@ -33,7 +33,7 @@ function M.get_cell_dimensions()
     return cell_width, cell_height
 end
 
----@param s string
+---@param s string bytes to be converted
 function M.bytes_to_number(s)
     local b1, b2, b3, b4 = s:byte(1, 4)
     return b1 * math.pow(2, 24) + b2 * math.pow(2, 16) + b3 * math.pow(2, 8) + b4
@@ -53,13 +53,33 @@ function M.typst_compile_cmd(opts)
     if opts.pages then
         compile = compile .. ' --pages ' .. opts.pages
     end
-    compile = compile .. ' - '
+    compile = compile .. ' - ' -- read the typst file contents from stdin
     if opts.output then
         compile = compile .. opts.output
     else
-        compile = compile .. '-'
+        compile = compile .. '-' -- write the image data to stdout
     end
     return echo .. ' | ' .. compile
+end
+
+---@param typst_data string typst file contents
+function M.get_image_dimensions(typst_data)
+    local cmd = M.typst_compile_cmd({
+        data = typst_data,
+        format = 'png',
+        pages = 1
+    })
+    local res = vim.system({ vim.o.shell, vim.o.shellcmdflag, cmd }):wait()
+    local data = res.stdout
+
+    if not data then
+        print('failed to compile (img dimentsions)', res.stderr)
+        return 0, 0
+    end
+
+    local w = M.bytes_to_number(data:sub(17, 20))
+    local h = M.bytes_to_number(data:sub(21, 24))
+    return h, w
 end
 
 ---@param cmds { no_ft: boolean?, event: string[] | string, callback: function }[]

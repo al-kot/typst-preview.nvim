@@ -1,17 +1,15 @@
-local utils = require('typst-preview/utils')
-local config = require('typst-preview/config').opts
-
 local M = {}
 local running = false
 
----@param opts ConfigOpts
+---@param opts ConfigOpts?
 function M.setup(opts)
-    require('typst-preview/config').setup(opts)
+    require('typst-preview.config').setup(opts)
 end
 
-local function setup_autocmds(preview)
+local function setup_autocmds()
+    local preview = require('typst-preview.preview')
     vim.api.nvim_create_augroup('TypstPreview', {})
-    utils.create_autocmds({
+    require('typst-preview.utils').create_autocmds({
         {
             event = { 'TextChanged', 'TextChangedI' },
             callback = function()
@@ -28,7 +26,6 @@ local function setup_autocmds(preview)
             event = 'BufEnter',
             callback = function()
                 preview.open_preview()
-                preview.update_statusline()
             end
         },
         {
@@ -62,6 +59,12 @@ local function setup_autocmds(preview)
             end
         },
         {
+            event = 'FocusGained',
+            callback = function()
+                preview.render()
+            end
+        },
+        {
             event = "VimResized",
             callback = function()
                 preview.update_preview_size()
@@ -75,11 +78,8 @@ function M.start()
     if running then
         return
     end
-    vim.api.nvim_set_hl(0, "StatusLineTypstPreview", { bold = true, fg = config.style.page_count_color, bg = 'none' })
-    local preview = require('typst-preview/preview')
-    preview.open_preview()
-    preview.update_statusline()
-    setup_autocmds(preview)
+    require('typst-preview.preview').open_preview()
+    setup_autocmds()
     running = true
 end
 
@@ -87,31 +87,30 @@ function M.stop()
     if not running then
         return
     end
-    local preview = require('typst-preview/preview')
-    preview.close_preview()
+    require('typst-preview.preview').close_preview()
     vim.api.nvim_clear_autocmds({ group = 'TypstPreview' })
     running = false
 end
 
 ---@param n number
 function M.change_page(n)
-    require('typst-preview/preview').change_page(n)
+    require('typst-preview.preview').change_page(n)
 end
 
 function M.first_page()
-    require('typst-preview/preview').first_page()
+    require('typst-preview.preview').first_page()
 end
 
 function M.last_page()
-    require('typst-preview/preview').last_page()
+    require('typst-preview.preview').last_page()
 end
 
 function M.next_page()
-    require('typst-preview/preview').next_page()
+    require('typst-preview.preview').next_page()
 end
 
 function M.prev_page()
-    require('typst-preview/preview').prev_page()
+    require('typst-preview.preview').prev_page()
 end
 
 return M

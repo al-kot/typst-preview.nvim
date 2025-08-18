@@ -1,11 +1,11 @@
-local codes = require('typst-preview/renderer/codes')
+local codes = require('typst-preview.renderer.codes')
 
 local M = {}
 
 local uv = vim.uv
 if not uv then uv = vim.loop end
 
-local is_tmux = true
+local is_tmux = vim.env.TMUX ~= nil
 
 local stdout = vim.loop.new_tty(1, false)
 if not stdout then
