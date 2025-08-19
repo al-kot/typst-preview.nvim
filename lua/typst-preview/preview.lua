@@ -77,7 +77,6 @@ local function update_total_page_number()
     cmd = cmd .. " | grep Pages | awk '{print $2}'"
     local res = vim.system({ vim.o.shell, vim.o.shellcmdflag, cmd }):wait()
     local new_page_number = tonumber(res.stdout)
-    print(new_page_number)
     if not new_page_number then
         print("failed to get page number: (" .. res.stdout .. ")")
         return
@@ -102,7 +101,7 @@ function M.update_preview_size(force)
             height = img_height,
             cols = cols,
             rows = rows,
-            win_offset = state.meta.win_cols - cols + 1,
+            win_offset = config.position == 'left' and 0 or state.meta.win_cols - cols + 1,
         }
         state.pages.placements[state.pages.current] = page_placement
     end
