@@ -62,18 +62,19 @@ function M.typst_compile_cmd(opts)
     return echo .. ' | ' .. compile
 end
 
----@param typst_data string typst file contents
-function M.get_image_dimensions(typst_data)
+---@param buf number
+---@param page number
+function M.get_page_dimensions(buf, page)
     local cmd = M.typst_compile_cmd({
-        data = typst_data,
+        data = M.get_buf_content(buf),
         format = 'png',
-        pages = 1
+        pages = page
     })
     local res = vim.system({ vim.o.shell, vim.o.shellcmdflag, cmd }):wait()
     local data = res.stdout
 
     if not data then
-        print('failed to compile (img dimentsions)', res.stderr)
+        print('failed to compile retrieve image information')
         return 0, 0
     end
 

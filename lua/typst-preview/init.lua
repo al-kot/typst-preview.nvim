@@ -113,4 +113,10 @@ function M.prev_page()
     require('typst-preview.preview').prev_page()
 end
 
+function M.refresh()
+    local preview = require('typst-preview.preview')
+    preview.update_preview_size()
+    preview.render()
+end
+
 return M

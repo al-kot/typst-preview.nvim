@@ -92,7 +92,7 @@ end
 ---@param win_offset number
 ---@param img_rows number
 ---@param img_cols number
-function M.render(data, win_offset, img_rows, img_cols)
+function M.render(data, win_offset, img_rows, img_cols, win_height)
     write_graphics({
         action = codes.action.transmit,
         transmit_format = codes.transmit_format.png,
@@ -101,7 +101,7 @@ function M.render(data, win_offset, img_rows, img_cols)
         quiet = 2,
         image_id = 1,
     }, data)
-    move_cursor(win_offset, 0)
+    move_cursor(win_offset, math.floor((win_height - img_rows) / 2))
 
     write_graphics({
         action = codes.action.display,
