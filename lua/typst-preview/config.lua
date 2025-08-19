@@ -1,30 +1,34 @@
 ---@class ConfigOpts
+---@field preview? PreviewOpts
+---@field statusline? StatusLineOpts
 
 ---@class PreviewOpts
----@field max_preview_width number
----@field ppi number
----@field preview_position 'left' | 'right'
+---@field max_width? number
+---@field ppi? number
+---@field position? 'left' | 'right'
 
----@class style
----@field page_count_color string
+---@class StatusLineOpts
+---@field enabled? boolean
+---@field color? string
 local default_opts = {
     preview = {
-        ppi = 144,
         max_width = 80,
-        position = 'right',
+        ppi = 144,
+        position = "right",
     },
     statusline = {
-        color = '',
+        enabled = true,
+        color = "#d5c4e1",
     },
 }
 
 local M = {
-    opts = default_opts
+    opts = default_opts,
 }
 
----@param opts ConfigOpts?
+---@param opts? ConfigOpts
 function M.setup(opts)
-    M.opts = vim.tbl_deep_extend('force', M.opts, opts or {})
+    M.opts = vim.tbl_deep_extend("force", M.opts, opts or {})
 end
 
 return M

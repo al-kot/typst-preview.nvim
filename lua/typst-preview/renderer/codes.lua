@@ -22,7 +22,7 @@ return {
     },
     transmit_medium = {
         file = "f",
-        direct = 'd',
+        direct = "d",
     },
     display_cursor_policy = {
         do_not_move = 1,

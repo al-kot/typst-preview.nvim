@@ -1,4 +1,4 @@
-local config = require('typst-preview.config').opts
+local config = require("typst-preview.config").opts
 local M = {}
 
 ---Get the dimensions of a terminal cell in pixels
@@ -43,18 +43,24 @@ end
 ---@param buf number
 ---@return string
 function M.get_buf_content(buf)
-    return table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), '\n')
+    return table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
 end
 
----@param opts { format: 'png' | 'pdf', pages: number?, input: string?, output: string?, ppi: number? }
+---@param opts { format: 'png' | 'pdf', pages?: number, input?: string, output?: string, ppi?: number }
 ---@return table
 function M.typst_compile_cmd(opts)
     local cmd = {
-        'typst', 'compile', '-f', opts.format, '--ppi',
-        tostring(opts.ppi or config.preview.ppi), opts.input or '-', opts.output or '-'
+        "typst",
+        "compile",
+        "-f",
+        opts.format,
+        "--ppi",
+        tostring(opts.ppi or config.preview.ppi),
+        opts.input or "-",
+        opts.output or "-",
     }
     if opts.pages then
-        table.insert(cmd, '--pages')
+        table.insert(cmd, "--pages")
         table.insert(cmd, tostring(opts.pages))
     end
     return cmd
@@ -63,9 +69,9 @@ end
 ---@param filename string
 ---@return number, number
 function M.get_page_dimensions(filename)
-    local f = io.open(filename, 'rb')
+    local f = io.open(filename, "rb")
     if not f then
-        print('failed to compile retrieve image information')
+        print("failed to compile retrieve image information")
         return 0, 0
     end
     local data = f:read(24)
@@ -76,21 +82,19 @@ function M.get_page_dimensions(filename)
     return h, w
 end
 
----@param cmds { no_ft: boolean?, event: string[] | string, callback: function }[]
+---@param cmds { no_ft?: boolean, event: string[] | string, callback: function }[]
 function M.create_autocmds(cmds)
     for _, v in pairs(cmds) do
         local cmd = {
-            pattern = { '*.typ' },
-            group = 'TypstPreview',
-            callback = v.callback
+            pattern = { "*.typ" },
+            group = "TypstPreview",
+            callback = v.callback,
         }
         -- HACK: in nvim v0.12 VimSuspend is not triggered if pattern is present
-        if v.no_ft then
-            cmd = {
-                group = 'TypstPreview',
-                callback = v.callback
-            }
-        end
+        if v.no_ft then cmd = {
+            group = "TypstPreview",
+            callback = v.callback,
+        } end
         vim.api.nvim_create_autocmd(v.event, cmd)
     end
 end

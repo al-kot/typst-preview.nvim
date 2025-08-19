@@ -1,7 +1,7 @@
-local renderer = require('typst-preview.renderer.renderer')
-local utils = require('typst-preview.utils')
-local config = require('typst-preview.config').opts.preview
-local statusline = require('typst-preview.statusline')
+local renderer = require("typst-preview.renderer.renderer")
+local utils = require("typst-preview.utils")
+local config = require("typst-preview.config").opts.preview
+local statusline = require("typst-preview.statusline")
 
 local M = {}
 
@@ -21,14 +21,12 @@ local state = {
         current = 1,
         placements = {},
     },
-    meta = {}
+    meta = {},
 }
 
-local preview_dir = vim.fn.stdpath('cache') .. '/typst_preview/'
-if not uv.fs_stat(preview_dir) then
-    uv.fs_mkdir(preview_dir, 493)
-end
-local preview_png = preview_dir .. vim.fn.expand('%:t:r') .. '.png'
+local preview_dir = vim.fn.stdpath("cache") .. "/typst_preview/"
+if not uv.fs_stat(preview_dir) then uv.fs_mkdir(preview_dir, 493) end
+local preview_png = preview_dir .. vim.fn.expand("%:t:r") .. ".png"
 
 function M.render()
     M.update_preview_size()
@@ -55,34 +53,33 @@ function M.compile_and_render()
     end
 
     local cmd = utils.typst_compile_cmd({
-        format = 'png',
+        format = "png",
         pages = state.pages.current,
-        output = preview_png
+        output = preview_png,
     })
 
-    current_job = vim.system(cmd, { stdin = utils.get_buf_content(state.code.buf) },
-        function(obj)
-            if obj.code == 0 and obj.signal ~= 9 then
-                M.update_preview_size()
-                M.render()
-            end
-        end)
+    current_job = vim.system(cmd, { stdin = utils.get_buf_content(state.code.buf) }, function(obj)
+        if obj.code == 0 and obj.signal ~= 9 then
+            M.update_preview_size()
+            M.render()
+        end
+    end)
 end
 
 local function update_total_page_number()
-    local target_pdf = preview_dir .. 'preview.pdf'
+    local target_pdf = preview_dir .. "preview.pdf"
     local typst_cmd = utils.typst_compile_cmd({
-        format = 'pdf',
-        output = target_pdf
+        format = "pdf",
+        output = target_pdf,
     })
-    local cmd = 'echo \'' .. utils.get_buf_content(state.code.buf)
-    cmd = cmd .. '\' | ' .. table.concat(typst_cmd, ' ') .. ' ;' .. 'pdfinfo ' .. target_pdf
-    cmd = cmd .. ' | grep Pages | awk \'{print $2}\''
+    local cmd = "echo '" .. utils.get_buf_content(state.code.buf)
+    cmd = cmd .. "' | " .. table.concat(typst_cmd, " ") .. " ;" .. "pdfinfo " .. target_pdf
+    cmd = cmd .. " | grep Pages | awk '{print $2}'"
     local res = vim.system({ vim.o.shell, vim.o.shellcmdflag, cmd }):wait()
     local new_page_number = tonumber(res.stdout)
     print(new_page_number)
     if not new_page_number then
-        print('failed to get page number: (' .. res.stdout .. ')')
+        print("failed to get page number: (" .. res.stdout .. ")")
         return
     end
     state.pages.total = new_page_number
@@ -105,7 +102,7 @@ function M.update_preview_size(force)
             height = img_height,
             cols = cols,
             rows = rows,
-            win_offset = state.meta.win_cols - cols + 1
+            win_offset = state.meta.win_cols - cols + 1,
         }
         state.pages.placements[state.pages.current] = page_placement
     end
@@ -133,13 +130,15 @@ local function setup_preview_win()
         win = 0,
         focusable = false,
         vertical = true,
-        style = 'minimal',
+        style = "minimal",
     })
     state.preview.buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_win_set_buf(state.preview.win, state.preview.buf)
 
-    if config.position == 'left' then
-        vim.schedule(function() vim.api.nvim_set_current_win(state.code.win) end)
+    if config.position == "left" then
+        vim.schedule(function()
+            vim.api.nvim_set_current_win(state.code.win)
+        end)
     end
 end
 
@@ -153,22 +152,28 @@ function M.change_page(n)
         new_page = 1
     end
 
-    if new_page == state.pages.current then
-        return
-    end
+    if new_page == state.pages.current then return end
 
     state.pages.current = new_page
     M.compile_and_render()
     statusline.update(state)
 end
 
-function M.next_page() M.change_page(1) end
+function M.next_page()
+    M.change_page(1)
+end
 
-function M.prev_page() M.change_page(-1) end
+function M.prev_page()
+    M.change_page(-1)
+end
 
-function M.first_page() M.change_page(-state.pages.current + 1) end
+function M.first_page()
+    M.change_page(-state.pages.current + 1)
+end
 
-function M.last_page() M.change_page(state.pages.total - state.pages.current) end
+function M.last_page()
+    M.change_page(state.pages.total - state.pages.current)
+end
 
 function M.open_preview()
     setup_preview_win()

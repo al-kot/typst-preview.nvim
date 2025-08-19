@@ -1,4 +1,4 @@
-local codes = require('typst-preview.renderer.codes')
+local codes = require("typst-preview.renderer.codes")
 
 local M = {}
 
@@ -9,7 +9,7 @@ local is_tmux = vim.env.TMUX ~= nil
 
 local stdout = vim.loop.new_tty(1, false)
 if not stdout then
-    print('could not open stdout')
+    print("could not open stdout")
     return
 end
 
@@ -20,7 +20,7 @@ local function escape_tmux(sequence)
 end
 
 ---@param data string
----@param escape boolean?
+---@param escape? boolean
 local function write(data, escape)
     if data == "" then return end
 
@@ -40,7 +40,7 @@ local get_chunked = function(str)
 end
 
 ---@param config {}
----@param data string?
+---@param data? string
 local function write_graphics(config, data)
     local control_payload = ""
 
@@ -48,9 +48,7 @@ local function write_graphics(config, data)
         if v ~= nil then
             local key = codes.keys[k]
             if key then
-                if type(v) == "number" then
-                    v = string.format("%d", v)
-                end
+                if type(v) == "number" then v = string.format("%d", v) end
                 control_payload = control_payload .. key .. "=" .. v .. ","
             end
         end
@@ -115,7 +113,7 @@ function M.render(data, win_offset, img_rows, img_cols, win_height)
     restore_cursor()
 end
 
----@param image_id number?
+---@param image_id? number
 function M.clear(image_id)
     if image_id then
         write_graphics({
