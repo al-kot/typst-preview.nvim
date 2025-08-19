@@ -34,6 +34,7 @@ function M.get_cell_dimensions()
 end
 
 ---@param s string bytes to be converted
+---@return number
 function M.bytes_to_number(s)
     local b1, b2, b3, b4 = s:byte(1, 4)
     return b1 * math.pow(2, 24) + b2 * math.pow(2, 16) + b3 * math.pow(2, 8) + b4
@@ -45,38 +46,30 @@ function M.get_buf_content(buf)
     return table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), '\n')
 end
 
----@param opts { data: string, format: string, pages: number?, output: string?, ppi: number? }
----@return string
+---@param opts { format: 'png' | 'pdf', pages: number?, input: string?, output: string?, ppi: number? }
+---@return table
 function M.typst_compile_cmd(opts)
-    local echo = 'echo \'' .. opts.data .. '\''
-    local compile = 'typst compile -f ' .. opts.format .. ' --ppi ' .. (opts.ppi or config.preview.ppi)
+    local cmd = {
+        'typst', 'compile', '-f', opts.format, '--ppi',
+        tostring(opts.ppi or config.preview.ppi), opts.input or '-', opts.output or '-'
+    }
     if opts.pages then
-        compile = compile .. ' --pages ' .. opts.pages
+        table.insert(cmd, '--pages')
+        table.insert(cmd, tostring(opts.pages))
     end
-    compile = compile .. ' - ' -- read the typst file contents from stdin
-    if opts.output then
-        compile = compile .. opts.output
-    else
-        compile = compile .. '-' -- write the image data to stdout
-    end
-    return echo .. ' | ' .. compile
+    return cmd
 end
 
----@param buf number
----@param page number
-function M.get_page_dimensions(buf, page)
-    local cmd = M.typst_compile_cmd({
-        data = M.get_buf_content(buf),
-        format = 'png',
-        pages = page
-    })
-    local res = vim.system({ vim.o.shell, vim.o.shellcmdflag, cmd }):wait()
-    local data = res.stdout
-
-    if not data then
+---@param filename string
+---@return number, number
+function M.get_page_dimensions(filename)
+    local f = io.open(filename, 'rb')
+    if not f then
         print('failed to compile retrieve image information')
         return 0, 0
     end
+    local data = f:read(24)
+    f:close()
 
     local w = M.bytes_to_number(data:sub(17, 20))
     local h = M.bytes_to_number(data:sub(21, 24))

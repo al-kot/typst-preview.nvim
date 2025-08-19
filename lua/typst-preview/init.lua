@@ -22,12 +22,12 @@ local function setup_autocmds()
                 preview.compile_and_render()
             end,
         },
-        {
-            event = 'BufEnter',
-            callback = function()
-                preview.open_preview()
-            end
-        },
+        -- {
+        --     event = 'BufEnter',
+        --     callback = function()
+        --         preview.open_preview()
+        --     end
+        -- },
         {
             event = 'QuitPre',
             callback = function()
@@ -67,7 +67,8 @@ local function setup_autocmds()
         {
             event = "VimResized",
             callback = function()
-                preview.update_preview_size()
+                preview.update_meta()
+                preview.update_preview_size(true)
                 preview.render()
             end
         },
@@ -115,7 +116,8 @@ end
 
 function M.refresh()
     local preview = require('typst-preview.preview')
-    preview.update_preview_size()
+    preview.update_meta()
+    preview.update_preview_size(true)
     preview.render()
 end
 
