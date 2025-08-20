@@ -1,6 +1,8 @@
 # typst-preview.nvim
 
-Live preview of [Typst](https://typst.app/) documents directly inside neovim.  
+Live preview of [Typst](https://typst.app/) documents directly inside neovim.
+
+https://github.com/user-attachments/assets/31418a36-2a10-40f5-9a19-fc810bd6436b
 
 ---
 
