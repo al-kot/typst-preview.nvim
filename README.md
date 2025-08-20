@@ -14,11 +14,13 @@ Live preview of [Typst](https://typst.app/) documents directly inside neovim.
     - ~~ghostty~~ (work needed, the rendering is buggy)
 
 note for tmux users: you will need to set these options
+
 ```tmux
 set -gq allow-passthrough on
 set -g visual-activity off
 set-option -g focus-events on
 ```
+
 but sometimes the image still stays when you switch windows and sessions (to fix)
 
 # 📦 Installation
