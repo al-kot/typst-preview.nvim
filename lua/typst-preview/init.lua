@@ -63,6 +63,7 @@ end
 ---@param opts? ConfigOpts
 function M.setup(opts)
     require("typst-preview.config").setup(opts)
+    require("typst-preview.statusline").setup()
 end
 
 function M.start()
@@ -80,27 +81,35 @@ function M.stop()
 end
 
 ---@param n number
-function M.change_page(n)
-    require("typst-preview.preview").change_page(n)
+function M.goto_page(n)
+    if not running then return end
+    require("typst-preview.preview").goto_page(n)
 end
 
 function M.first_page()
+    if not running then return end
     require("typst-preview.preview").first_page()
 end
 
 function M.last_page()
+    if not running then return end
     require("typst-preview.preview").last_page()
 end
 
-function M.next_page()
-    require("typst-preview.preview").next_page()
+---@param n? number
+function M.next_page(n)
+    if not running then return end
+    require("typst-preview.preview").next_page(n)
 end
 
-function M.prev_page()
-    require("typst-preview.preview").prev_page()
+---@param n? number
+function M.prev_page(n)
+    if not running then return end
+    require("typst-preview.preview").prev_page(n)
 end
 
 function M.refresh()
+    if not running then return end
     local preview = require("typst-preview.preview")
     preview.update_meta()
     preview.update_preview_size(true)

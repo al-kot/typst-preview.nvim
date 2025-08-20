@@ -8,7 +8,7 @@ local M = {}
 local uv = vim.uv
 
 ---@class State
----@field code { win: number, buf: number }
+---@field code { win: number, buf: number, compiled: boolean }
 ---@field preview { win?: number, buf: number }
 ---@field pages { total: number, current: number, placements: {
 ---width: number, height: number, rows: number, cols:number , win_offset: number }[] } width, height -> pixels | rows, cols -> cells
@@ -59,9 +59,17 @@ function M.compile_and_render()
     })
 
     current_job = vim.system(cmd, { stdin = utils.get_buf_content(state.code.buf) }, function(obj)
-        if obj.code == 0 and obj.signal ~= 9 then
-            M.update_preview_size()
-            M.render()
+        if obj.signal ~= 9 then
+            if obj.code == 0 then
+                state.code.compiled = true
+                M.update_preview_size()
+                M.render()
+            else
+                state.code.compiled = false
+            end
+            vim.schedule(function()
+                statusline.update(state)
+            end)
         end
     end)
 end
@@ -101,7 +109,7 @@ function M.update_preview_size(force)
             height = img_height,
             cols = cols,
             rows = rows,
-            win_offset = config.position == 'left' and 0 or state.meta.win_cols - cols + 1,
+            win_offset = config.position == "left" and 0 or state.meta.win_cols - cols + 1,
         }
         state.pages.placements[state.pages.current] = page_placement
     end
@@ -142,36 +150,39 @@ local function setup_preview_win()
 end
 
 ---@param n number
-function M.change_page(n)
-    local new_page = state.pages.current + n
+function M.goto_page(n)
     update_total_page_number()
-    if new_page > state.pages.total then
-        new_page = state.pages.total
-    elseif new_page < 1 then
-        new_page = 1
+    if n > state.pages.total then
+        n = state.pages.total
+    elseif n < 1 then
+        n = 1
     end
 
-    if new_page == state.pages.current then return end
+    if n == state.pages.current then return end
 
-    state.pages.current = new_page
+    state.pages.current = n
     M.compile_and_render()
     statusline.update(state)
 end
 
-function M.next_page()
-    M.change_page(1)
+---@param n? number
+function M.next_page(n)
+    if not n then n = 1 end
+    M.goto_page(state.pages.current + n)
 end
 
-function M.prev_page()
-    M.change_page(-1)
+---@param n? number
+function M.prev_page(n)
+    if not n then n = 1 end
+    M.goto_page(state.pages.current - n)
 end
 
 function M.first_page()
-    M.change_page(-state.pages.current + 1)
+    M.goto_page(1)
 end
 
 function M.last_page()
-    M.change_page(state.pages.total - state.pages.current)
+    M.goto_page(state.pages.total)
 end
 
 function M.open_preview()

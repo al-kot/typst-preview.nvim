@@ -1,7 +1,3 @@
----@class ConfigOpts
----@field preview? PreviewOpts
----@field statusline? StatusLineOpts
-
 ---@class PreviewOpts
 ---@field max_width? number
 ---@field ppi? number
@@ -9,7 +5,12 @@
 
 ---@class StatusLineOpts
 ---@field enabled? boolean
----@field color? string
+---@field compile? { ok?: { icon?: string, color?: string }, ko?: { icon?: string, color?: string }}
+---@field page_count? { color?: string }
+
+---@class ConfigOpts
+---@field preview? PreviewOpts
+---@field statusline? StatusLineOpts
 local default_opts = {
     preview = {
         max_width = 80,
@@ -18,7 +19,13 @@ local default_opts = {
     },
     statusline = {
         enabled = true,
-        color = "#d5c4e1",
+        compile = {
+            ok = { icon = "", color = "#b8bb26" },
+            ko = { icon = "", color = "#fb4943" },
+        },
+        page_count = {
+            color = "#d5c4e1",
+        },
     },
 }
 

@@ -119,7 +119,7 @@ function M.clear(image_id)
         write_graphics({
             action = codes.action.delete,
             display_delete = "i",
-            image_id = 1,
+            image_id = image_id,
             quiet = 2,
         })
         return
