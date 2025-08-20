@@ -6,7 +6,7 @@ Live preview of [Typst](https://typst.app/) documents directly inside neovim.
 
 # ⚡️ Requirements
 
-- (`typst`)[https://github.com/typst/typst#installation]
+- (typst)[https://github.com/typst/typst#installation]
 - `pdfinfo`
 - terminal that supports kitty graphics protocol:
     - kitty
