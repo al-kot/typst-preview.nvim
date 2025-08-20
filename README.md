@@ -29,7 +29,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-    "aleshasuqa/typst-preview.nvim",
+    "al-kot/typst-preview.nvim",
     opts = {
         -- your config here
     }
@@ -40,7 +40,7 @@ Using [vim.pack](https://neovim.io/doc/user/pack.html#vim.pack) (nightly):
 
 ```lua
 vim.pack.add({
-    "https://github.com/aleshasuqa/typst-preview.nvim.git",
+    "https://github.com/al-kot/typst-preview.nvim.git",
 })
 
 require('typst-preview').setup({
