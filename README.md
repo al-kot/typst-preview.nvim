@@ -6,7 +6,7 @@ Live preview of [Typst](https://typst.app/) documents directly inside neovim.
 
 # ⚡️ Requirements
 
-- (typst)[https://github.com/typst/typst#installation]
+- [`typst`](https://github.com/typst/typst#installation)
 - `pdfinfo`
 - terminal that supports kitty graphics protocol:
     - kitty
@@ -14,7 +14,7 @@ Live preview of [Typst](https://typst.app/) documents directly inside neovim.
     - ~~ghostty~~ (work needed, the rendering is buggy)
 
 note for tmux users: you will need to set these options
-```
+```tmux
 set -gq allow-passthrough on
 set -g visual-activity off
 set-option -g focus-events on
@@ -107,7 +107,7 @@ preview.refresh() -- in case the image shifts or the page number is wrong
 | TypstPreviewOpen | Opens the preview |
 | TypstPreviewClose | Closes the preview |
 | TypstPreviewGoTo n| Go to page n |
-| TypstPreviewStop | Show logs (will contain the compilation errors if any) |
+| TypstPreviewLogs | Show logs (will contain the compilation errors if any) |
 
 
 ## Open on startup
@@ -134,7 +134,7 @@ vim.keymap.set("n", "<leader>tn", function()
   require("typst-preview").next_page()
 end, { desc = "Next page" })
 
-vim.keymap.set("n", "<leader>tP", function()
+vim.keymap.set("n", "<leader>tp", function()
   require("typst-preview").prev_page()
 end, { desc = "Previous page" })
 
