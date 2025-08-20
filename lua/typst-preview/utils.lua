@@ -1,4 +1,5 @@
 local config = require("typst-preview.config").opts
+local log = require("typst-preview.logger")
 local M = {}
 
 ---Get the dimensions of a terminal cell in pixels
@@ -71,7 +72,7 @@ end
 function M.get_page_dimensions(filename)
     local f = io.open(filename, "rb")
     if not f then
-        print("failed to compile retrieve image information")
+        log.error("failed to open file " .. filename .. " to retrieve image dimensions")
         return 0, 0
     end
     local data = f:read(24)

@@ -2,6 +2,9 @@ local renderer = require("typst-preview.renderer.renderer")
 local utils = require("typst-preview.utils")
 local config = require("typst-preview.config").opts.preview
 local statusline = require("typst-preview.statusline")
+local log = require("typst-preview.logger")
+
+assert(config ~= nil, "config must not be nil")
 
 local M = {}
 
@@ -65,6 +68,9 @@ function M.compile_and_render()
                 M.update_preview_size()
                 M.render()
             else
+                vim.schedule(function()
+                    log.info("(preview) compilation failed:\n" .. obj.stderr)
+                end)
                 state.code.compiled = false
             end
             vim.schedule(function()
@@ -86,7 +92,9 @@ local function update_total_page_number()
     local res = vim.system({ vim.o.shell, vim.o.shellcmdflag, cmd }):wait()
     local new_page_number = tonumber(res.stdout)
     if not new_page_number then
-        print("failed to get page number: (" .. res.stdout .. ")")
+        log.warn(
+            "(preview) failed to get page number: stdout = (" .. res.stdout .. "), stderr = (" .. res.stderr .. ")"
+        )
         return
     end
     state.pages.total = new_page_number
@@ -107,7 +115,7 @@ function M.update_preview_size(force)
         page_placement = {
             width = img_width,
             height = img_height,
-            cols = cols,
+            cols = cols or 0,
             rows = rows,
             win_offset = config.position == "left" and 0 or state.meta.win_cols - cols + 1,
         }

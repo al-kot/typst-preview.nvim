@@ -1,4 +1,5 @@
 local codes = require("typst-preview.renderer.codes")
+local log = require('typst-preview.logger')
 
 local M = {}
 
@@ -9,7 +10,7 @@ local is_tmux = vim.env.TMUX ~= nil
 
 local stdout = vim.loop.new_tty(1, false)
 if not stdout then
-    print("could not open stdout")
+    log.error("(renderer) could not open stdout")
     return
 end
 
