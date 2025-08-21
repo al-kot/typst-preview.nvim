@@ -2,7 +2,7 @@
 
 Live preview of [Typst](https://typst.app/) documents directly inside neovim.
 
-https://github.com/user-attachments/assets/31418a36-2a10-40f5-9a19-fc810bd6436b
+![preview](https://github.com/user-attachments/assets/7eeaa889-8b0e-4c54-afe1-f33fc20f63d9)
 
 ---
 
