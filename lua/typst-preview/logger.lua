@@ -13,7 +13,7 @@ local function write_log(level, msg)
     local time = os.date('%H:%M:%S')
     local file = io.open(log_file, 'a')
     if not file then return end
-    file:write('[' .. level .. ']' .. '[' ..time .. '] ' .. msg)
+    file:write('[' .. level .. ']' .. '[' ..time .. '] ' .. msg .. '\n')
     file:close()
 end
 

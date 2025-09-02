@@ -69,7 +69,7 @@ function M.compile_and_render()
                 M.render()
             else
                 vim.schedule(function()
-                    log.info("(preview) compilation failed:\n" .. obj.stderr)
+                    log.warn("(preview) compilation failed:\n" .. obj.stderr)
                 end)
                 state.code.compiled = false
             end
@@ -86,14 +86,14 @@ local function update_total_page_number()
         format = "pdf",
         output = target_pdf,
     })
-    local cmd = "echo '" .. utils.get_buf_content(state.code.buf)
-    cmd = cmd .. "' | " .. table.concat(typst_cmd, " ") .. " ;" .. "pdfinfo " .. target_pdf
-    cmd = cmd .. " | grep Pages | awk '{print $2}'"
+    local cmd = table.concat(typst_cmd, " ")
+    cmd = cmd .. " << EOF\n" .. utils.get_buf_content(state.code.buf) .. "\nEOF\n; "
+    cmd = cmd .. "pdfinfo " .. target_pdf .. " | grep Pages | awk '{print $2}'"
     local res = vim.system({ vim.o.shell, vim.o.shellcmdflag, cmd }):wait()
     local new_page_number = tonumber(res.stdout)
     if not new_page_number then
         log.warn(
-            "(preview) failed to get page number: stdout = (" .. res.stdout .. "), stderr = (" .. res.stderr .. ")"
+            "(preview) failed to get page number:\n" .. res.stderr
         )
         return
     end
