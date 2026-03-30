@@ -7,6 +7,10 @@ local uv = vim.uv
 if not uv then uv = vim.loop end
 
 local is_tmux = vim.env.TMUX ~= nil
+local config = require("typst-preview.config").opts.preview
+
+local backend = "kitty"
+local last_sixel_frame
 
 local stdout = vim.loop.new_tty(1, false)
 if not stdout then
@@ -87,11 +91,51 @@ local restore_cursor = function()
     write("\27[u")
 end
 
+local function clear_sixel_frame()
+    if not last_sixel_frame then return end
+    write("\27[s")
+    for row = 0, last_sixel_frame.rows - 1 do
+        write("\27[" .. (last_sixel_frame.y + row) .. ";" .. last_sixel_frame.x .. "H")
+        write(string.rep(" ", last_sixel_frame.cols))
+    end
+    write("\27[u")
+    last_sixel_frame = nil
+end
+
+local function render_sixel(data, win_offset, img_rows, img_cols, win_height)
+    local y = math.floor((win_height - img_rows) / 2)
+    if y < 1 then y = 1 end
+
+    local sixel_bin = config.sixel_bin or "img2sixel"
+    local res = vim.system({ sixel_bin, "-w", tostring(img_cols), data }):wait()
+    if res.code ~= 0 then
+        log.warn("(renderer) sixel render failed:\n" .. (res.stderr or ""))
+        return
+    end
+
+    clear_sixel_frame()
+    move_cursor(win_offset, y)
+    write(res.stdout or "")
+    restore_cursor()
+
+    last_sixel_frame = {
+        x = win_offset,
+        y = y,
+        rows = img_rows,
+        cols = img_cols,
+    }
+end
+
 ---@param data string
 ---@param win_offset number
 ---@param img_rows number
 ---@param img_cols number
 function M.render(data, win_offset, img_rows, img_cols, win_height)
+    if backend == "sixel" then
+        render_sixel(data, win_offset, img_rows, img_cols, win_height)
+        return
+    end
+
     write_graphics({
         action = codes.action.transmit,
         transmit_format = codes.transmit_format.png,
@@ -116,6 +160,11 @@ end
 
 ---@param image_id? number
 function M.clear(image_id)
+    if backend == "sixel" then
+        clear_sixel_frame()
+        return
+    end
+
     if image_id then
         write_graphics({
             action = codes.action.delete,
@@ -131,6 +180,16 @@ function M.clear(image_id)
         display_delete = "a",
         quiet = 2,
     })
+end
+
+---@param value 'kitty' | 'sixel'
+function M.set_backend(value)
+    backend = value
+end
+
+---@return 'kitty' | 'sixel'
+function M.get_backend()
+    return backend
 end
 
 return M
