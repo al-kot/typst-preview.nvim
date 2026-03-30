@@ -2,6 +2,19 @@ local config = require("typst-preview.config").opts
 local log = require("typst-preview.logger")
 local M = {}
 
+---@return string?
+function M.get_sixel_bin()
+    local configured = config.preview.sixel_bin
+    if configured and configured ~= "" and vim.fn.executable(configured) == 1 then
+        return configured
+    end
+
+    if vim.fn.executable("img2sixel") == 1 then return "img2sixel" end
+    if vim.fn.executable("chafa") == 1 then return "chafa" end
+
+    return nil
+end
+
 ---@return boolean
 function M.supports_kitty_graphics()
     local term = (vim.env.TERM or ""):lower()
@@ -16,8 +29,8 @@ end
 
 ---@return boolean
 function M.supports_sixel()
-    local sixel_bin = config.preview.sixel_bin or "img2sixel"
-    if vim.fn.executable(sixel_bin) ~= 1 then return false end
+    local sixel_bin = M.get_sixel_bin()
+    if not sixel_bin then return false end
 
     local term = (vim.env.TERM or ""):lower()
     local term_program = (vim.env.TERM_PROGRAM or ""):lower()
@@ -42,7 +55,7 @@ function M.get_preview_backend()
 
     if backend == "sixel" then
         if M.supports_sixel() then return "sixel" end
-        return nil, "SIXEL backend not available (check terminal support and img2sixel)"
+        return nil, "SIXEL backend not available (check terminal support and img2sixel/chafa)"
     end
 
     if M.supports_kitty_graphics() then return "kitty" end

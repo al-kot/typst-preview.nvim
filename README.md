@@ -12,8 +12,8 @@ https://github.com/user-attachments/assets/0a85089d-1eff-4e10-bf94-51087a6a65c0
 - `pdfinfo`
 - terminal that supports at least one backend:
     - kitty graphics protocol (kitty, wezterm)
-    - sixel (requires `img2sixel`)
-- if using sixel fallback, install `img2sixel` (libsixel)
+    - sixel (requires `img2sixel` or `chafa`)
+- if using sixel fallback, install `img2sixel` (libsixel) or `chafa`
 - terminal that supports kitty graphics protocol:
     - kitty
     - wezterm (performance and image quality are worse than with kitty)
@@ -65,7 +65,7 @@ require("typst-preview").setup({
         ppi = 144, -- The PPI (pixels per inch) to use for PNG export (high value will affect the performance)
         position = "right", -- The position of the preview window relative to the code window
         backend = "auto", -- one of: auto, kitty, sixel
-        sixel_bin = "img2sixel", -- sixel renderer binary
+        sixel_bin = "img2sixel", -- optional (auto-detects img2sixel/chafa if unavailable)
     },
     statusline = {
         enabled = true, -- Show statusline
