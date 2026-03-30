@@ -14,8 +14,8 @@ local uv = vim.uv
 ---@field code { win: number, buf: number, compiled: boolean }
 ---@field preview { win?: number, buf: number }
 ---@field pages { total: number, current: number, placements: {
----width: number, height: number, rows: number, cols:number , win_offset: number }[] } width, height -> pixels | rows, cols -> cells
----@field meta { cell_width: number, cell_height: number, win_rows: number, win_cols: number }
+---width: number, height: number, rows: number, cols:number , win_col: number, win_row: number }[] } width, height -> pixels | rows, cols -> cells
+---@field meta { cell_width: number, cell_height: number, win_rows: number }
 local state = {
     code = {},
     preview = {},
@@ -36,7 +36,8 @@ function M.render()
     local page_placement = state.pages.placements[state.pages.current]
     renderer.render(
         preview_png,
-        page_placement.win_offset,
+        page_placement.win_col,
+        page_placement.win_row,
         page_placement.rows,
         page_placement.cols,
         state.meta.win_rows
@@ -65,8 +66,14 @@ function M.compile_and_render()
         if obj.signal ~= 9 then
             if obj.code == 0 then
                 state.code.compiled = true
-                M.update_preview_size()
-                M.render()
+                vim.schedule(function()
+                    if not state.preview.win or not vim.api.nvim_win_is_valid(state.preview.win) then return end
+                    if not state.code.buf or not vim.api.nvim_buf_is_valid(state.code.buf) then return end
+
+                    M.update_meta()
+                    M.update_preview_size()
+                    M.render()
+                end)
             else
                 vim.schedule(function()
                     log.warn("(preview) compilation failed:\n" .. obj.stderr)
@@ -118,25 +125,37 @@ function M.update_preview_size(force)
             cols = config.max_width
             rows = math.ceil((state.meta.cell_width * cols * img_height) / (img_width * state.meta.cell_height))
         end
+
+        if rows > state.meta.win_rows then
+            rows = state.meta.win_rows
+            cols = math.ceil((state.meta.cell_height * rows * img_width) / (img_height * state.meta.cell_width))
+        end
+
+        if cols < 1 then cols = 1 end
+        if rows < 1 then rows = 1 end
+
+        vim.api.nvim_win_set_width(state.preview.win, cols)
+
+        local preview_pos = vim.api.nvim_win_get_position(state.preview.win)
+        local win_col = preview_pos[2] + 1
+        local win_row = preview_pos[1] + 1
+
         page_placement = {
             width = img_width,
             height = img_height,
             cols = cols or 0,
             rows = rows,
-            win_offset = config.position == "left" and 0 or state.meta.win_cols - cols + 1,
+            win_col = win_col,
+            win_row = win_row,
         }
         state.pages.placements[state.pages.current] = page_placement
     end
-    vim.schedule(function()
-        vim.api.nvim_win_set_width(state.preview.win, page_placement.cols)
-    end)
 end
 
 function M.update_meta()
     local cell_width, cell_height = utils.get_cell_dimensions()
     state.meta = {
-        win_rows = vim.api.nvim_win_get_height(0),
-        win_cols = vim.api.nvim_win_get_width(state.code.win) + vim.api.nvim_win_get_width(state.preview.win) + 1,
+        win_rows = vim.api.nvim_win_get_height(state.preview.win),
         cell_height = cell_height,
         cell_width = cell_width,
     }

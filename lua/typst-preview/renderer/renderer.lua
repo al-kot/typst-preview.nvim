@@ -1,5 +1,6 @@
 local codes = require("typst-preview.renderer.codes")
 local log = require('typst-preview.logger')
+local utils = require("typst-preview.utils")
 
 local M = {}
 
@@ -7,10 +8,10 @@ local uv = vim.uv
 if not uv then uv = vim.loop end
 
 local is_tmux = vim.env.TMUX ~= nil
-local config = require("typst-preview.config").opts.preview
 
 local backend = "kitty"
 local last_sixel_frame
+local sixel_render_seq = 0
 
 local stdout = vim.loop.new_tty(1, false)
 if not stdout then
@@ -102,37 +103,63 @@ local function clear_sixel_frame()
     last_sixel_frame = nil
 end
 
-local function render_sixel(data, win_offset, img_rows, img_cols, win_height)
-    local y = math.floor((win_height - img_rows) / 2)
-    if y < 1 then y = 1 end
+local function render_sixel(data, win_col, img_rows, img_cols, y)
 
-    local sixel_bin = config.sixel_bin or "img2sixel"
-    local res = vim.system({ sixel_bin, "-w", tostring(img_cols), data }):wait()
-    if res.code ~= 0 then
-        log.warn("(renderer) sixel render failed:\n" .. (res.stderr or ""))
+    local sixel_bin = utils.get_sixel_bin()
+    if not sixel_bin then
+        log.warn("(renderer) sixel backend selected but no sixel binary found")
         return
     end
 
-    clear_sixel_frame()
-    move_cursor(win_offset, y)
-    write(res.stdout or "")
-    restore_cursor()
+    local sixel_cmd
+    local bin_name = sixel_bin:lower()
+    if bin_name:find("chafa", 1, true) then
+        sixel_cmd = { sixel_bin, "-f", "sixels", "--size", string.format("%dx%d", img_cols, img_rows), data }
+    else
+        sixel_cmd = { sixel_bin, "-w", tostring(img_cols), data }
+    end
 
-    last_sixel_frame = {
-        x = win_offset,
-        y = y,
-        rows = img_rows,
-        cols = img_cols,
-    }
+    sixel_render_seq = sixel_render_seq + 1
+    local current_seq = sixel_render_seq
+
+    vim.system(sixel_cmd, {}, function(res)
+        if current_seq ~= sixel_render_seq then return end
+        if res.code ~= 0 then
+            vim.schedule(function()
+                log.warn("(renderer) sixel render failed:\n" .. (res.stderr or ""))
+            end)
+            return
+        end
+
+        vim.schedule(function()
+            if current_seq ~= sixel_render_seq then return end
+
+            clear_sixel_frame()
+            move_cursor(win_col, y)
+            write(res.stdout or "")
+            restore_cursor()
+
+            last_sixel_frame = {
+                x = win_col,
+                y = y,
+                rows = img_rows,
+                cols = img_cols,
+            }
+        end)
+    end)
 end
 
 ---@param data string
----@param win_offset number
+---@param win_col number
+---@param win_row number
 ---@param img_rows number
 ---@param img_cols number
-function M.render(data, win_offset, img_rows, img_cols, win_height)
+function M.render(data, win_col, win_row, img_rows, img_cols, win_height)
+    local y = win_row + math.floor((win_height - img_rows) / 2)
+    if y < 1 then y = 1 end
+
     if backend == "sixel" then
-        render_sixel(data, win_offset, img_rows, img_cols, win_height)
+        render_sixel(data, win_col, img_rows, img_cols, y)
         return
     end
 
@@ -144,7 +171,7 @@ function M.render(data, win_offset, img_rows, img_cols, win_height)
         quiet = 2,
         image_id = 1,
     }, data)
-    move_cursor(win_offset, math.floor((win_height - img_rows) / 2))
+    move_cursor(win_col, y)
 
     write_graphics({
         action = codes.action.display,
@@ -161,6 +188,7 @@ end
 ---@param image_id? number
 function M.clear(image_id)
     if backend == "sixel" then
+        sixel_render_seq = sixel_render_seq + 1
         clear_sixel_frame()
         return
     end
