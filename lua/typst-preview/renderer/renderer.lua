@@ -103,6 +103,55 @@ local function clear_sixel_frame()
     last_sixel_frame = nil
 end
 
+---@param y number
+---@param x number
+---@param len number
+local function clear_segment(y, x, len)
+    if len <= 0 then return end
+    write("\27[" .. y .. ";" .. x .. "H")
+    write(string.rep(" ", len))
+end
+
+---@param old { x: number, y: number, rows: number, cols: number }
+---@param new { x: number, y: number, rows: number, cols: number }
+local function clear_sixel_non_overlap(old, new)
+    local old_y1 = old.y
+    local old_y2 = old.y + old.rows - 1
+    local old_x1 = old.x
+    local old_x2 = old.x + old.cols - 1
+
+    local new_y1 = new.y
+    local new_y2 = new.y + new.rows - 1
+    local new_x1 = new.x
+    local new_x2 = new.x + new.cols - 1
+
+    write("\27[s")
+    for y = old_y1, old_y2 do
+        if y < new_y1 or y > new_y2 then
+            clear_segment(y, old_x1, old.cols)
+        else
+            local left_len = math.max(0, math.min(old_x2, new_x1 - 1) - old_x1 + 1)
+            local right_start = math.max(old_x1, new_x2 + 1)
+            local right_len = math.max(0, old_x2 - right_start + 1)
+
+            clear_segment(y, old_x1, left_len)
+            clear_segment(y, right_start, right_len)
+        end
+    end
+    write("\27[u")
+end
+
+---@param old { x: number, y: number, rows: number, cols: number }?
+---@param new { x: number, y: number, rows: number, cols: number }
+---@return boolean
+local function same_frame(old, new)
+    if not old then return false end
+    return old.x == new.x
+        and old.y == new.y
+        and old.rows == new.rows
+        and old.cols == new.cols
+end
+
 local function render_sixel(data, win_col, img_rows, img_cols, y)
 
     local sixel_bin = utils.get_sixel_bin()
@@ -134,17 +183,22 @@ local function render_sixel(data, win_col, img_rows, img_cols, y)
         vim.schedule(function()
             if current_seq ~= sixel_render_seq then return end
 
-            clear_sixel_frame()
-            move_cursor(win_col, y)
-            write(res.stdout or "")
-            restore_cursor()
-
-            last_sixel_frame = {
+            local new_frame = {
                 x = win_col,
                 y = y,
                 rows = img_rows,
                 cols = img_cols,
             }
+
+            move_cursor(win_col, y)
+            write(res.stdout or "")
+            restore_cursor()
+
+            if last_sixel_frame and not same_frame(last_sixel_frame, new_frame) then
+                clear_sixel_non_overlap(last_sixel_frame, new_frame)
+            end
+
+            last_sixel_frame = new_frame
         end)
     end)
 end
