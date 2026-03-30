@@ -14,6 +14,43 @@ function M.supports_kitty_graphics()
     return false
 end
 
+---@return boolean
+function M.supports_sixel()
+    local sixel_bin = config.preview.sixel_bin or "img2sixel"
+    if vim.fn.executable(sixel_bin) ~= 1 then return false end
+
+    local term = (vim.env.TERM or ""):lower()
+    local term_program = (vim.env.TERM_PROGRAM or ""):lower()
+
+    if term:find("sixel", 1, true) then return true end
+    if term_program:find("wezterm", 1, true) then return true end
+    if term:find("wezterm", 1, true) then return true end
+    if term:find("xterm", 1, true) then return true end
+    if vim.env.WT_SESSION and vim.env.WT_SESSION ~= "" then return true end
+
+    return false
+end
+
+---@return 'kitty' | 'sixel' | nil, string?
+function M.get_preview_backend()
+    local backend = config.preview.backend or "auto"
+
+    if backend == "kitty" then
+        if M.supports_kitty_graphics() then return "kitty" end
+        return nil, "kitty graphics protocol not available"
+    end
+
+    if backend == "sixel" then
+        if M.supports_sixel() then return "sixel" end
+        return nil, "SIXEL backend not available (check terminal support and img2sixel)"
+    end
+
+    if M.supports_kitty_graphics() then return "kitty" end
+    if M.supports_sixel() then return "sixel" end
+
+    return nil, "No supported preview backend detected (kitty or sixel)"
+end
+
 ---Get the dimensions of a terminal cell in pixels
 ---@return number, number
 function M.get_cell_dimensions()

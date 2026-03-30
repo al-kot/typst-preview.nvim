@@ -68,6 +68,14 @@ end
 
 function M.start()
     if running then return end
+    local utils = require("typst-preview.utils")
+    local backend, reason = utils.get_preview_backend()
+    if not backend then
+        vim.notify("typst-preview.nvim: " .. reason, vim.log.levels.ERROR)
+        return
+    end
+
+    require("typst-preview.renderer.renderer").set_backend(backend)
     require("typst-preview.preview").open_preview()
     setup_autocmds()
     running = true
