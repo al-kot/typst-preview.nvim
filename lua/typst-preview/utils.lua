@@ -2,9 +2,26 @@ local config = require("typst-preview.config").opts
 local log = require("typst-preview.logger")
 local M = {}
 
+---@return boolean
+function M.supports_kitty_graphics()
+    local term = (vim.env.TERM or ""):lower()
+    local term_program = (vim.env.TERM_PROGRAM or ""):lower()
+
+    if term:find("kitty", 1, true) then return true end
+    if term_program:find("wezterm", 1, true) then return true end
+    if vim.env.WEZTERM_EXECUTABLE and vim.env.WEZTERM_EXECUTABLE ~= "" then return true end
+
+    return false
+end
+
 ---Get the dimensions of a terminal cell in pixels
 ---@return number, number
 function M.get_cell_dimensions()
+    if vim.fn.has("win32") == 1 then
+        -- Fallback values for Windows where ioctl is unavailable in LuaJIT FFI.
+        return 8, 16
+    end
+
     local ffi = require("ffi")
     ffi.cdef([[
         typedef struct {
@@ -27,6 +44,7 @@ function M.get_cell_dimensions()
 
     ---@type { row: number, col: number, xpixel: number, ypixel: number }
     local sz = ffi.new("winsize")
+    assert(TIOCGWINSZ ~= nil, "Unsupported platform for ioctl terminal size")
     assert(ffi.C.ioctl(1, TIOCGWINSZ, sz) == 0, "Failed to get terminal size")
 
     local cell_height = sz.ypixel / sz.row

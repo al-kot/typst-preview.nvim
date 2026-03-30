@@ -86,13 +86,21 @@ local function update_total_page_number()
         format = "pdf",
         output = target_pdf,
     })
-    local cmd = table.concat(typst_cmd, " ")
-    cmd = cmd .. " << 'EOF'\n" .. utils.get_buf_content(state.code.buf) .. "\nEOF\n"
-    cmd = cmd .. "pdfinfo " .. target_pdf .. " | grep Pages | awk '{print $2}'"
-    local res = vim.system({ vim.o.shell, vim.o.shellcmdflag, cmd }):wait()
-    local new_page_number = tonumber(res.stdout)
+    local compile_res = vim.system(typst_cmd, { stdin = utils.get_buf_content(state.code.buf) }):wait()
+    if compile_res.code ~= 0 then
+        log.warn("(preview) failed to compile pdf for page count:\n" .. compile_res.stderr)
+        return
+    end
+
+    local info_res = vim.system({ "pdfinfo", target_pdf }):wait()
+    if info_res.code ~= 0 then
+        log.warn("(preview) failed to get page number:\n" .. info_res.stderr)
+        return
+    end
+
+    local new_page_number = tonumber((info_res.stdout or ""):match("[Pp]ages:%s*(%d+)"))
     if not new_page_number then
-        log.warn("(preview) failed to get page number:\n" .. res.stderr)
+        log.warn("(preview) failed to parse page number from pdfinfo output")
         return
     end
     state.pages.total = new_page_number
