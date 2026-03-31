@@ -57,6 +57,16 @@ local function setup_autocmds()
                 preview.render()
             end,
         },
+        {
+            no_ft = true,
+            event = "WinResized",
+            callback = function()
+                if vim.bo.filetype ~= "typst" then return end
+                preview.update_meta()
+                preview.update_preview_size(true)
+                preview.render()
+            end,
+        },
     })
 end
 

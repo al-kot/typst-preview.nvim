@@ -172,6 +172,8 @@ local function setup_preview_win()
         vertical = true,
         style = "minimal",
     })
+
+    vim.wo[state.preview.win].winfixwidth = true
     state.preview.buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_win_set_buf(state.preview.win, state.preview.buf)
 
