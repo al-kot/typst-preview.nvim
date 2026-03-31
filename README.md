@@ -10,6 +10,7 @@ https://github.com/user-attachments/assets/0a85089d-1eff-4e10-bf94-51087a6a65c0
 
 - [`typst`](https://github.com/typst/typst#installation)
 - `pdfinfo`
+  - on Windows, you can install it via [poppler-windows](https://github.com/oschwartz10612/poppler-windows)
 - terminal that supports at least one backend:
     - kitty graphics protocol (kitty, wezterm)
     - sixel (requires `img2sixel` or `chafa`)
