@@ -1,6 +1,19 @@
 local M = {}
 local running = false
 
+local function safe_refresh(preview, force)
+    vim.schedule(function()
+        local ok = pcall(function()
+            preview.update_meta()
+            preview.update_preview_size(force)
+            preview.render()
+        end)
+        if not ok then
+            -- Ignore transient window-state race conditions.
+        end
+    end)
+end
+
 local function setup_autocmds()
     local preview = require("typst-preview.preview")
     vim.api.nvim_create_augroup("TypstPreview", {})
@@ -52,19 +65,21 @@ local function setup_autocmds()
         {
             event = "VimResized",
             callback = function()
-                preview.update_meta()
-                preview.update_preview_size(true)
-                preview.render()
+                safe_refresh(preview, true)
             end,
         },
         {
             no_ft = true,
             event = "WinResized",
             callback = function()
-                if vim.bo.filetype ~= "typst" then return end
-                preview.update_meta()
-                preview.update_preview_size(true)
-                preview.render()
+                safe_refresh(preview, true)
+            end,
+        },
+        {
+            no_ft = true,
+            event = "WinEnter",
+            callback = function()
+                safe_refresh(preview, true)
             end,
         },
     })

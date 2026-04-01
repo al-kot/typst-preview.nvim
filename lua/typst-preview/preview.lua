@@ -150,6 +150,12 @@ function M.update_preview_size(force)
         }
         state.pages.placements[state.pages.current] = page_placement
     end
+
+    if page_placement and state.preview.win and vim.api.nvim_win_is_valid(state.preview.win) then
+        local preview_pos = vim.api.nvim_win_get_position(state.preview.win)
+        page_placement.win_col = preview_pos[2] + 1
+        page_placement.win_row = preview_pos[1] + 1
+    end
 end
 
 function M.update_meta()
