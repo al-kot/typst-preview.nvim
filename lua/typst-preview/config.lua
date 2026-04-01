@@ -2,6 +2,8 @@
 ---@field max_width? number
 ---@field ppi? number
 ---@field position? 'left' | 'right'
+---@field backend? 'auto' | 'kitty' | 'sixel'
+---@field sixel_bin? string
 
 ---@class StatusLineOpts
 ---@field enabled? boolean
@@ -16,6 +18,8 @@ local default_opts = {
         max_width = 80,
         ppi = 144,
         position = "right",
+        backend = "auto",
+        sixel_bin = "img2sixel",
     },
     statusline = {
         enabled = true,

@@ -47,6 +47,17 @@ function M.check()
 
     check_bin("typst")
     check_bin("pdfinfo")
+    local utils = require("typst-preview.utils")
+    local backend, reason = utils.get_preview_backend()
+    if backend then
+        health.ok("Preview backend available: " .. backend)
+        if backend == "sixel" then
+            health.info("Using sixel backend fallback")
+        end
+    else
+        health.error(reason or "No supported preview backend")
+    end
+
     if vim.env.TMUX then check_tmux_options() end
 end
 

@@ -1,6 +1,19 @@
 local M = {}
 local running = false
 
+local function safe_refresh(preview, force)
+    vim.schedule(function()
+        local ok = pcall(function()
+            preview.update_meta()
+            preview.update_preview_size(force)
+            preview.render()
+        end)
+        if not ok then
+            -- Ignore transient window-state race conditions.
+        end
+    end)
+end
+
 local function setup_autocmds()
     local preview = require("typst-preview.preview")
     vim.api.nvim_create_augroup("TypstPreview", {})
@@ -52,9 +65,21 @@ local function setup_autocmds()
         {
             event = "VimResized",
             callback = function()
-                preview.update_meta()
-                preview.update_preview_size(true)
-                preview.render()
+                safe_refresh(preview, true)
+            end,
+        },
+        {
+            no_ft = true,
+            event = "WinResized",
+            callback = function()
+                safe_refresh(preview, true)
+            end,
+        },
+        {
+            no_ft = true,
+            event = "WinEnter",
+            callback = function()
+                safe_refresh(preview, true)
             end,
         },
     })
@@ -68,6 +93,14 @@ end
 
 function M.start()
     if running then return end
+    local utils = require("typst-preview.utils")
+    local backend, reason = utils.get_preview_backend()
+    if not backend then
+        vim.notify("typst-preview.nvim: " .. reason, vim.log.levels.ERROR)
+        return
+    end
+
+    require("typst-preview.renderer.renderer").set_backend(backend)
     require("typst-preview.preview").open_preview()
     setup_autocmds()
     running = true
