@@ -53,6 +53,8 @@ function M.typst_compile_cmd(opts)
     local cmd = {
         "typst",
         "compile",
+        "--root",
+        vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
         "-f",
         opts.format,
         "--ppi",
