@@ -65,7 +65,6 @@ function M.compile_and_render()
         if obj.signal ~= 9 then
             if obj.code == 0 then
                 state.code.compiled = true
-                M.update_preview_size()
                 M.render()
             else
                 vim.schedule(function()
